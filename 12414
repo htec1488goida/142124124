@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASCII Camera</title>
+    <style>
+        body { text-align: center; font-family: monospace; background-color: black; color: white; }
+        pre { font-size: 8px; line-height: 6px; }
+    </style>
+</head>
+<body>
+    <h1>Live ASCII Camera</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <pre id="ascii"></pre>
+    <script>
+        const video = document.getElementById('video');
+        const asciiElement = document.getElementById('ascii');
+        const asciiChars = "@%#*+=-:. ";
+        
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => { video.srcObject = stream; })
+            .catch(err => console.error("Ошибка доступа к камере:", err));
+        
+        function videoToAscii() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 100;
+            canvas.height = 50;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            let asciiStr = "";
+            for (let i = 0; i < imageData.data.length; i += 4 * canvas.width) {
+                for (let j = 0; j < canvas.width * 4; j += 4) {
+                    const avg = (imageData.data[i + j] + imageData.data[i + j + 1] + imageData.data[i + j + 2]) / 3;
+                    const char = asciiChars[Math.floor(avg / 32)] || ' ';
+                    asciiStr += char;
+                }
+                asciiStr += "\n";
+            }
+            asciiElement.textContent = asciiStr;
+        }
+        
+        setInterval(videoToAscii, 100);
+    </script>
+</body>
+</html>
